@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心连心工作效率工具集</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="company-logo">
+                <h1>❤️ 广西心连心工作效率工具集</h1>
+               <!--  <h2>🛠️ 工作效率工具集</h2>-->
+            </div>
+             <!--<p>专为心连心员工设计的智能办公工具集合 | 提升工作效率，确保文档质量</p>
+            <div class="company-info">
+                <span>🏢 仅限内部使用</span>
+                <span>🔒 安全可靠</span>
+                <span>⚡ 高效便捷</span>
+            </div>-->
+        </header>
+
+        <!-- 工具导航 -->
+        <nav class="tools-nav" id="toolsNav">
+            <div class="nav-item active" data-tool="text-correction">
+                <i class="fas fa-spell-check"></i>
+                <span>文本纠错</span>
+                <div class="nav-description">智能识别并纠正文本错误</div>
+            </div>
+            <div class="nav-item" data-tool="text-diff">
+                <i class="fas fa-code-compare"></i>
+                <span>文本对比</span>
+                <div class="nav-description">快速对比两个文本的差异</div>
+            </div>
+            <div class="nav-item disabled" data-tool="coming-soon">
+                <i class="fas fa-plus"></i>
+                <span>更多工具</span>
+                <div class="nav-description">敬请期待更多功能</div>
+            </div>
+        </nav>
+
+        <!-- 工具容器 -->
+        <div class="tools-container">
+            <!-- 文本纠错工具 -->
+            <div class="tool-module active" id="textCorrectionModule">
+                <div class="module-header">
+                    <h3><i class="fas fa-spell-check"></i> 智能文本纠错</h3>
+                    <p>基于科大讯飞API的专业文本纠错服务，支持文本输入和文档上传</p>
+                </div>
+
+                <!-- 标签页导航 -->
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="text-input">
+                        <i class="fas fa-keyboard"></i>
+                        文本输入
+                    </button>
+                    <button class="tab-button" data-tab="file-upload">
+                        <i class="fas fa-file-upload"></i>
+                        文档上传
+                    </button>
+                </div>
+
+                <!-- 文本输入面板 -->
+                <div class="tab-content active" id="text-input">
+                    <div class="input-section">
+                        <h4><i class="fas fa-edit"></i> 输入需要纠错的文本</h4>
+                        <textarea 
+                            id="textInput" 
+                            placeholder="请在此输入需要纠错的文本内容，最大支持2000字符。"
+                            maxlength="2000"
+                        ></textarea>
+                        <div class="char-counter">
+                            <span id="charCount">0</span>/2000 字符
+                        </div>
+                        <button class="btn btn-primary" id="correctTextBtn">
+                            <i class="fas fa-magic"></i> 开始纠错
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 文件上传面板 -->
+                <div class="tab-content" id="file-upload">
+                    <div class="upload-section">
+                        <h4><i class="fas fa-upload"></i> 上传文档进行纠错</h4>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">
+                                <p>拖拽文件到此处或点击选择文件</p>
+                                <p class="upload-hint">支持格式：.txt, .doc, .docx, .pdf（最大10MB）</p>
+                            </div>
+                            <input type="file" id="fileInput" accept=".txt,.doc,.docx,.pdf" hidden>
+                        </div>
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <div class="file-details">
+                                <i class="fas fa-file-alt"></i>
+                                <span id="fileName"></span>
+                                <span id="fileSize"></span>
+                            </div>
+                            <button class="btn btn-secondary" id="removeFileBtn">
+                                <i class="fas fa-times"></i> 移除
+                            </button>
+                        </div>
+                        <button class="btn btn-primary" id="correctFileBtn" disabled>
+                            <i class="fas fa-magic"></i> 开始纠错
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 结果显示区域 -->
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <h4><i class="fas fa-check-circle"></i> 纠错结果</h4>
+                    <div class="result-tabs">
+                        <button class="result-tab-btn active" data-result-tab="comparison">对比显示</button>
+                        <button class="result-tab-btn" data-result-tab="details">详细信息</button>
+                    </div>
+                    
+                    <div class="result-content active" id="comparison-result">
+                        <div class="comparison-container">
+                            <div class="comparison-panel">
+                                <h5>原文本</h5>
+                                <div class="original-text" id="originalText"></div>
+                            </div>
+                            <div class="comparison-panel">
+                                <h5>纠错后</h5>
+                                <div class="corrected-text" id="comparisonCorrectedText"></div>
+                                <button class="btn btn-secondary" id="copyBtn">
+                                    <i class="fas fa-copy"></i> 复制结果
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-content" id="details-result">
+                        <div class="details-container" id="detailsContainer">
+                            <!-- 详细纠错信息将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文本对比工具 -->
+            <div class="tool-module" id="textDiffModule">
+                <div class="module-header">
+                    <h3><i class="fas fa-code-compare"></i> 文本对比工具</h3>
+                    <p>实时对比两个文本的差异，支持智能高亮显示和统计分析</p>
+                </div>
+
+                <div class="diff-controls">
+                    <button id="diffCompareBtn" class="btn btn-primary">🔍 开始对比</button>
+                    <button id="diffClearBtn" class="btn btn-secondary">🗑️ 清空内容</button>
+                    <button id="diffSwapBtn" class="btn btn-secondary">🔄 交换文本</button>
+                    <button id="diffExampleBtn" class="btn btn-secondary">📄 加载示例</button>
+                    <div class="diff-options">
+                        <label>
+                            <input type="checkbox" id="ignoreCase" checked>
+                            忽略大小写
+                        </label>
+                        <label>
+                            <input type="checkbox" id="ignoreWhitespace">
+                            忽略空白字符
+                        </label>
+                    </div>
+                </div>
+
+                <div class="diff-editor-container">
+                    <div class="diff-editor-panel">
+                        <div class="panel-header">
+                            <h4>原始文本</h4>
+                            <span class="char-count" id="leftCount">0 字符</span>
+                        </div>
+                        <textarea id="leftText" placeholder="请在此输入原始文本..."></textarea>
+                    </div>
+
+                    <div class="diff-editor-panel">
+                        <div class="panel-header">
+                            <h4>对比文本</h4>
+                            <span class="char-count" id="rightCount">0 字符</span>
+                        </div>
+                        <textarea id="rightText" placeholder="请在此输入要对比的文本..."></textarea>
+                    </div>
+                </div>
+
+                <div class="diff-result-container" id="diffResultContainer" style="display: none;">
+                    <div class="diff-result-header">
+                        <h4>对比结果</h4>
+                        <div class="legend">
+                            <span class="legend-item">
+                                <span class="legend-color added"></span>
+                                新增内容
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color removed"></span>
+                                删除内容
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color modified"></span>
+                                修改内容
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="diff-container">
+                        <div class="diff-panel">
+                            <h5>原始文本</h5>
+                            <div id="leftDiff" class="diff-content"></div>
+                        </div>
+                        <div class="diff-panel">
+                            <h5>对比文本</h5>
+                            <div id="rightDiff" class="diff-content"></div>
+                        </div>
+                    </div>
+
+                    <div class="diff-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">新增行数:</span>
+                            <span id="addedLines" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">删除行数:</span>
+                            <span id="removedLines" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">修改行数:</span>
+                            <span id="modifiedLines" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载指示器 -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>正在处理，请稍候...</p>
+            </div>
+        </div>
+
+        <!-- 消息提示 -->
+        <div class="message" id="message" style="display: none;"></div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 广西心连心公司 版权所有</p>
+            <!-- <p>内部专用工具集 | 如有技术问题请联系IT部门</p> -->
+            <div class="footer-links">
+                <span>📞 技术支持: 工程组信息化组</span>
+                <span>📧 反馈邮箱: rainiesygit@163.com</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 模块化脚本加载 -->
+    <script src="config.js"></script>
+    <script src="dependencyContainer.js"></script>
+    <script src="eventBus.js"></script>
+    <script src="cacheManager.js"></script>
+    <script src="userExperienceManager.js"></script>
+    <script src="testManager.js"></script>
+    <script src="documentationGenerator.js"></script>
+    <script src="errorHandler.js"></script>
+    <script src="apiClient.js"></script>
+    <script src="textProcessor.js"></script>
+    <script src="uiManager.js"></script>
+    <script src="textDiffModule.js"></script>
+    <script src="toolsController.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

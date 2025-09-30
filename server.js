@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3003;
+const PORT = process.env.PORT || 3003;
 
 // 科大讯飞API配置
 const XUNFEI_CONFIG = {
@@ -393,34 +393,32 @@ app.get('/api/health', (req, res) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] 💓 健康检查请求`);
   
-  const healthData = { status: 'ok', message: '心连心文本纠错小程序运行正常' };
+  const healthData = { 
+    status: 'ok', 
+    message: '心连心文本纠错小程序运行正常',
+    timestamp: timestamp,
+    port: PORT,
+    uptime: process.uptime()
+  };
   console.log(`[${timestamp}] ✅ 健康检查响应:`, healthData);
   
   res.json(healthData);
 });
 
-// 健康检查端点
-app.get('/api/health', (req, res) => {
-    const healthStatus = {
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
+// 根路径健康检查
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: '心连心文本纠错服务',
         version: '2.0.0',
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        services: {
-            xunfei: {
-                status: 'available',
-                endpoint: 'wss://iat-api.xfyun.cn/v2/iat'
-            }
-        },
-        environment: {
-            node_version: process.version,
-            platform: process.platform,
-            port: PORT
+        timestamp: new Date().toISOString(),
+        endpoints: {
+            health: '/api/health',
+            status: '/api/status',
+            correct_text: '/api/correct-text',
+            correct_file: '/api/correct-file'
         }
-    };
-    
-    res.json(healthStatus);
+    });
 });
 
 // API状态端点
@@ -439,11 +437,11 @@ app.get('/api/status', (req, res) => {
 
 
 // 启动服务器
-app.listen(PORT, () => {
-    console.log(`🚀 服务器运行在 http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 服务器运行在 http://0.0.0.0:${PORT}`);
     console.log('📁 支持的文件格式: .txt, .doc, .docx, .pdf');
-    console.log('🔗 健康检查: http://localhost:' + PORT + '/api/health');
-    console.log('📊 状态检查: http://localhost:' + PORT + '/api/status');
+    console.log('🔗 健康检查: http://0.0.0.0:' + PORT + '/api/health');
+    console.log('📊 状态检查: http://0.0.0.0:' + PORT + '/api/status');
 });
 
 // 错误处理

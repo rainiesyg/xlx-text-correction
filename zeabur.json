@@ -2,11 +2,9 @@
   "name": "xinlianxin-text-correction",
   "type": "nodejs",
   "buildCommand": "npm install",
-  "startCommand": "npm start",
-  "port": 3003,
+  "startCommand": "node server.js",
   "environment": {
-    "NODE_ENV": "production",
-    "PORT": "3003"
+    "NODE_ENV": "production"
   },
   "regions": ["hkg1"],
   "plan": "hobby",
@@ -18,20 +16,5 @@
   "healthCheck": {
     "path": "/api/health",
     "timeout": 30
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
-  ],
-  "functions": {
-    "server.js": {
-      "runtime": "nodejs18.x"
-    }
   }
 }

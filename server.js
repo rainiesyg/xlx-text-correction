@@ -437,11 +437,32 @@ app.get('/api/status', (req, res) => {
 
 
 // 启动服务器
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 服务器运行在 http://0.0.0.0:${PORT}`);
+    console.log(`📦 Node.js版本: ${process.version}`);
+    console.log(`🌍 环境: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`💾 内存使用: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
     console.log('📁 支持的文件格式: .txt, .doc, .docx, .pdf');
     console.log('🔗 健康检查: http://0.0.0.0:' + PORT + '/api/health');
     console.log('📊 状态检查: http://0.0.0.0:' + PORT + '/api/status');
+    console.log('✅ 服务器启动成功！');
+});
+
+// 优雅关闭处理
+process.on('SIGTERM', () => {
+    console.log('📴 收到SIGTERM信号，正在优雅关闭服务器...');
+    server.close(() => {
+        console.log('✅ 服务器已关闭');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('📴 收到SIGINT信号，正在优雅关闭服务器...');
+    server.close(() => {
+        console.log('✅ 服务器已关闭');
+        process.exit(0);
+    });
 });
 
 // 错误处理

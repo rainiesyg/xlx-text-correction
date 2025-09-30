@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3000;
 
 // 科大讯飞API配置
 const XUNFEI_CONFIG = {
@@ -436,16 +436,22 @@ app.get('/api/status', (req, res) => {
 
 
 
-// 启动服务器
+// 启动服务器 - 确保监听所有网络接口
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 服务器运行在 http://0.0.0.0:${PORT}`);
+    console.log(`🚀 服务器运行在端口: ${PORT}`);
     console.log(`📦 Node.js版本: ${process.version}`);
     console.log(`🌍 环境: ${process.env.NODE_ENV || 'development'}`);
     console.log(`💾 内存使用: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
     console.log('📁 支持的文件格式: .txt, .doc, .docx, .pdf');
-    console.log('🔗 健康检查: http://0.0.0.0:' + PORT + '/api/health');
-    console.log('📊 状态检查: http://0.0.0.0:' + PORT + '/api/status');
-    console.log('✅ 服务器启动成功！');
+    console.log(`🔗 健康检查: /api/health`);
+    console.log(`📊 状态检查: /api/status`);
+    console.log('✅ 服务器启动成功！监听所有网络接口');
+    
+    // 输出重要的环境信息用于调试
+    console.log('🔧 调试信息:');
+    console.log(`   - PORT环境变量: ${process.env.PORT || '未设置'}`);
+    console.log(`   - 实际监听端口: ${PORT}`);
+    console.log(`   - 监听地址: 0.0.0.0`);
 });
 
 // 优雅关闭处理
@@ -465,11 +471,28 @@ process.on('SIGINT', () => {
     });
 });
 
-// 错误处理
+// 错误处理 - 添加更详细的错误日志
 process.on('uncaughtException', (error) => {
-  console.error('未捕获的异常:', error);
+  console.error('❌ 未捕获的异常:', error);
+  console.error('❌ 错误堆栈:', error.stack);
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('未处理的Promise拒绝:', reason);
+  console.error('❌ 未处理的Promise拒绝:', reason);
+  console.error('❌ Promise:', promise);
+  process.exit(1);
 });
+
+// 监听服务器错误
+server.on('error', (error) => {
+  console.error('❌ 服务器错误:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ 端口 ${PORT} 已被占用`);
+  }
+});
+
+// 添加启动超时检测
+setTimeout(() => {
+  console.log('⏰ 服务器启动超时检测 - 如果看到此消息说明服务器已运行超过5秒');
+}, 5000);

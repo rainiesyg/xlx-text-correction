@@ -1,3 +1,13 @@
 {
-  "name": "xinlianxin-text-correction"
+  "name": "xinlianxin-text-correction",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "node test-server.js",
+    "healthCheck": {
+      "path": "/health",
+      "port": "$PORT"
+    }
+  }
 }

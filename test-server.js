@@ -73,7 +73,7 @@ app.get('/debug', (req, res) => {
   res.status(200).json(debugData);
 });
 
-// 启动服务器
+// 启动服务器 - 绑定到所有接口
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Test server running on port ${PORT}`);
   console.log(`📍 Health check: http://0.0.0.0:${PORT}/health`);
@@ -83,11 +83,14 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📦 Environment: ${process.env.NODE_ENV || 'production'}`);
   console.log(`🆔 Process ID: ${process.pid}`);
   console.log(`📂 Working directory: ${process.cwd()}`);
+  console.log(`🌐 Binding to: 0.0.0.0:${PORT} (all interfaces)`);
   console.log('🎉 Server started successfully!');
   
   // 测试服务器是否真的在监听
   setTimeout(() => {
-    console.log('🔍 Server listening check - Address:', server.address());
+    const address = server.address();
+    console.log('🔍 Server listening check - Address:', address);
+    console.log(`🔍 Server is listening on ${address.address}:${address.port}`);
   }, 1000);
 });
 

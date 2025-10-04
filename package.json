@@ -2,13 +2,13 @@
   "name": "xinlianxin-text-correction",
   "version": "1.0.0",
   "description": "广西心连心公司员工内部文本纠错小程序 - 集成文本纠错、文本对比、智能分析等多功能模块",
-  "main": "test-server.js",
+  "main": "simple-server.js",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "node test-server.js",
+    "start": "node simple-server.js",
     "dev": "nodemon test-server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs": "node -e \"console.log('生成API文档...')\"",

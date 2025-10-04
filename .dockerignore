@@ -8,13 +8,11 @@ README.md
 coverage
 .nyc_output
 .coverage
-.coverage/
 *.md
 .DS_Store
 Thumbs.db
 .vscode
 .idea
 *.log
-logs
-*.tgz
-*.tar.gz
+.tmp
+.cache

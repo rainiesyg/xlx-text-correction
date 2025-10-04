@@ -4,10 +4,6 @@
     "dockerfile": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "node test-server.js",
-    "healthCheck": {
-      "path": "/health",
-      "port": "$PORT"
-    }
+    "startCommand": "node test-server.js"
   }
 }

@@ -1,9 +1,0 @@
-{
-  "name": "xinlianxin-text-correction",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "deploy": {
-    "startCommand": "node test-server.js"
-  }
-}

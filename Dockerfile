@@ -13,8 +13,8 @@ RUN npm install --production
 # 复制测试服务器文件
 COPY test-server.js ./
 
-# 暴露端口
-EXPOSE 3000
+# 暴露动态端口（Zeabur会自动设置PORT环境变量）
+EXPOSE $PORT
 
 # 启动测试服务器
 CMD ["node", "test-server.js"]

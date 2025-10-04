@@ -1,14 +1,20 @@
+# 使用官方Node.js运行时作为基础镜像
 FROM node:18-alpine
 
+# 设置工作目录
 WORKDIR /app
 
+# 复制package.json和package-lock.json
 COPY package*.json ./
-RUN npm install --production
 
-COPY simple-server.js ./
+# 安装生产依赖
+RUN npm ci --only=production
 
-# 固定暴露端口3000
+# 复制应用代码
+COPY simple-server.js .
+
+# 暴露端口（Zeabur会动态分配，但保留3000作为默认）
 EXPOSE 3000
 
-# 启动服务器，不使用任何环境变量
+# 启动应用
 CMD ["node", "simple-server.js"]

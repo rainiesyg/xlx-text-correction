@@ -1,9 +1,12 @@
 const express = require('express');
 const app = express();
-const PORT = 3000;
+
+// 使用Zeabur的PORT环境变量，但有固定默认值
+const PORT = process.env.PORT || 3000;
 
 console.log('Starting simple server...');
-console.log('Fixed PORT:', PORT);
+console.log('PORT from env:', process.env.PORT);
+console.log('Using PORT:', PORT);
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -18,6 +21,7 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on fixed port ${PORT}`);
-  console.log('No dynamic port binding - using port 3000 only');
+  console.log(`✅ Simple server running on port ${PORT}`);
+  console.log(`🌐 Server ready to accept connections`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

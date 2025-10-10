@@ -9,7 +9,10 @@ COPY package*.json ./
 RUN npm install --production --silent
 
 # 复制应用代码
-COPY simple-server.js ./
+COPY server.js ./
+COPY middleware/ ./middleware/
+COPY routes/ ./routes/
+COPY public/ ./public/
 
 # 暴露端口
 EXPOSE 3000

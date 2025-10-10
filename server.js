@@ -8,14 +8,30 @@ const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 
+// 导入错误处理和验证中间件
+const { 
+  AppError, 
+  ErrorTypes, 
+  Logger, 
+  errorHandler, 
+  notFoundHandler, 
+  asyncHandler 
+} = require('./middleware/errorHandler');
+const { 
+  validateTextCorrection, 
+  validateFileUpload, 
+  sanitizeInput 
+} = require('./middleware/validator');
+const logsRouter = require('./routes/logs');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 科大讯飞API配置
 const XUNFEI_CONFIG = {
-  APPID: 'a4fe0d69',
-  APISecret: 'NzVmMjAyOTg3ODUxNGU5MjdjZWE2NmY4',
-  APIKey: '3dc6961e01940585f3a7bb55dcef9b34',
+  APPID: process.env.IFLYTEK_APPID || 'a4fe0d69',
+  APISecret: process.env.IFLYTEK_API_SECRET || 'NzVmMjAyOTg3ODUxNGU5MjdjZWE2NmY4',
+  APIKey: process.env.IFLYTEK_API_KEY || '3dc6961e01940585f3a7bb55dcef9b34',
   HOST: 'api.xf-yun.com',
   URI: '/v1/private/s9a87e3ec'
 };
@@ -90,6 +106,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static('public'));
 
+// 日志管理路由
+app.use('/api/logs', logsRouter);
+
 // 文件上传配置
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -136,17 +155,17 @@ async function correctText(text) {
   const timestamp = new Date().toISOString();
   
   try {
-    console.log(`[${timestamp}] 🔧 开始构建科大讯飞API请求`);
-    console.log(`[${timestamp}] 📝 输入文本长度: ${text.length} 字符`);
+    Logger.debug('开始构建科大讯飞API请求', {
+      textLength: text.length
+    });
     
     // 生成认证信息
     const { date, authorization } = generateXunfeiAuth();
-    console.log(`[${timestamp}] 🔐 生成认证信息完成`);
-    console.log(`[${timestamp}] 📅 请求时间: ${date}`);
+    Logger.debug('生成认证信息完成', { date });
     
     // 按照官方文档要求，构建请求体JSON格式
     const textBase64 = Buffer.from(text, 'utf8').toString('base64');
-    console.log(`[${timestamp}] 🔄 文本Base64编码完成，长度: ${textBase64.length}`);
+    Logger.debug('文本Base64编码完成', { encodedLength: textBase64.length });
     
     const requestBody = {
       "header": {
@@ -173,15 +192,15 @@ async function correctText(text) {
         }
       }
     };
-    
-    console.log(`[${timestamp}] 📦 请求体构建完成`);
-    console.log(`[${timestamp}] 🏷️  APP_ID: ${XUNFEI_CONFIG.APPID}`);
 
     // 构建完整的URL，包含认证参数（按照官方文档格式）
     const url = `https://${XUNFEI_CONFIG.HOST}${XUNFEI_CONFIG.URI}?authorization=${encodeURIComponent(authorization)}&date=${encodeURIComponent(date)}&host=${XUNFEI_CONFIG.HOST}`;
     
-    console.log(`[${timestamp}] 🌐 请求URL: ${XUNFEI_CONFIG.HOST}${XUNFEI_CONFIG.URI}`);
-    console.log(`[${timestamp}] 🚀 发送API请求...`);
+    Logger.debug('发送API请求', { 
+      host: XUNFEI_CONFIG.HOST,
+      uri: XUNFEI_CONFIG.URI,
+      appId: XUNFEI_CONFIG.APPID
+    });
     
     const startTime = Date.now();
     const response = await axios.post(url, requestBody, {
@@ -193,12 +212,14 @@ async function correctText(text) {
     });
     
     const apiDuration = Date.now() - startTime;
-    console.log(`[${timestamp}] ⏱️  API响应时间: ${apiDuration}ms`);
-    console.log(`[${timestamp}] 📊 响应状态: ${response.status} ${response.statusText}`);
-    console.log(`[${timestamp}] 📋 响应头:`, JSON.stringify(response.headers, null, 2));
+    Logger.info('API响应接收完成', {
+      duration: apiDuration,
+      status: response.status,
+      statusText: response.statusText
+    });
 
     if (response.data) {
-      console.log(`[${timestamp}] 📄 响应数据结构:`, {
+      Logger.debug('响应数据结构检查', {
         hasHeader: !!response.data.header,
         hasPayload: !!response.data.payload,
         headerCode: response.data.header?.code,
@@ -207,12 +228,16 @@ async function correctText(text) {
       
       // 如果有错误码，返回错误信息
       if (response.data.header && response.data.header.code && response.data.header.code !== 0) {
-        console.log(`[${timestamp}] ❌ API返回错误码: ${response.data.header.code}`);
-        console.log(`[${timestamp}] ❌ 错误信息: ${response.data.header.message}`);
-        return { 
-          error: `API错误 ${response.data.header.code}: ${response.data.header.message || '未知错误'}`,
-          code: response.data.header.code
-        };
+        const errorMessage = `API错误 ${response.data.header.code}: ${response.data.header.message || '未知错误'}`;
+        Logger.error('科大讯飞API返回错误', {
+          code: response.data.header.code,
+          message: response.data.header.message
+        });
+        
+        throw new AppError(errorMessage, ErrorTypes.API_ERROR, {
+          code: response.data.header.code,
+          message: response.data.header.message
+        });
       }
       
       // 对返回的text字段进行base64解码
@@ -220,38 +245,52 @@ async function correctText(text) {
         try {
           const decodedText = Buffer.from(response.data.payload.result.text, 'base64').toString('utf8');
           response.data.payload.result.text = decodedText;
-          console.log(`[${timestamp}] 🔄 响应文本Base64解码完成，长度: ${decodedText.length}`);
+          Logger.debug('响应文本Base64解码完成', { decodedLength: decodedText.length });
         } catch (decodeError) {
-          console.log(`[${timestamp}] ❌ Base64解码失败:`, decodeError.message);
+          Logger.error('Base64解码失败', { error: decodeError.message });
+          throw new AppError('响应数据解码失败', ErrorTypes.API_ERROR, decodeError.message);
         }
       }
       
-      console.log(`[${timestamp}] ✅ 科大讯飞API调用成功`);
+      Logger.info('科大讯飞API调用成功');
       return response.data;
     }
     
-    console.log(`[${timestamp}] ❌ API响应数据为空`);
-    return { error: '纠错服务暂时不可用' };
+    Logger.error('API响应数据为空');
+    throw new AppError('纠错服务暂时不可用', ErrorTypes.API_ERROR);
   } catch (error) {
-    console.log(`[${timestamp}] 💥 科大讯飞API调用异常:`, error.message);
+    // 如果已经是AppError，直接抛出
+    if (error instanceof AppError) {
+      throw error;
+    }
+    
+    Logger.error('科大讯飞API调用异常', {
+      message: error.message,
+      code: error.code,
+      response: error.response ? {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      } : null
+    });
     
     if (error.response) {
-      console.log(`[${timestamp}] 📊 错误响应状态: ${error.response.status}`);
-      console.log(`[${timestamp}] 📄 错误响应数据:`, error.response.data);
-      console.log(`[${timestamp}] 📋 错误响应头:`, error.response.headers);
-      return { 
-        error: `API调用失败 ${error.response.status}: ${error.response.statusText}`,
-        details: error.response.data
-      };
+      throw new AppError(
+        `API调用失败 ${error.response.status}: ${error.response.statusText}`,
+        ErrorTypes.API_ERROR,
+        error.response.data
+      );
     }
     
     if (error.code === 'ECONNABORTED') {
-      console.log(`[${timestamp}] ⏰ 请求超时`);
-      return { error: '请求超时，请稍后重试' };
+      throw new AppError('请求超时，请稍后重试', ErrorTypes.NETWORK_ERROR);
     }
     
-    console.log(`[${timestamp}] 🌐 网络连接错误:`, error.code);
-    return { error: '网络连接失败: ' + error.message };
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      throw new AppError('网络连接失败', ErrorTypes.NETWORK_ERROR, error.message);
+    }
+    
+    throw new AppError('网络连接失败: ' + error.message, ErrorTypes.NETWORK_ERROR);
   }
 }
 
@@ -285,89 +324,69 @@ async function extractTextFromFile(filePath, originalName) {
 // API路由
 
 // 文本纠错接口
-app.post('/api/correct-text', async (req, res) => {
+// 文本纠错接口
+app.post('/api/correct-text', validateTextCorrection, asyncHandler(async (req, res) => {
   const timestamp = new Date().toISOString();
   
-  try {
-    const { text } = req.body;
-    
-    console.log(`[${timestamp}] 🔤 开始文本纠错`);
-    console.log(`[${timestamp}] 📝 文本长度: ${text ? text.length : 0} 字符`);
-    console.log(`[${timestamp}] 📄 文本预览: ${text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : 'null'}`);
-    
-    if (!text || text.trim().length === 0) {
-      console.log(`[${timestamp}] ❌ 验证失败: 文本为空`);
-      return res.status(400).json({ error: '请输入要纠错的文本' });
-    }
-    
-    if (text.length > 2000) {
-      console.log(`[${timestamp}] ❌ 验证失败: 文本过长 (${text.length} > 2000)`);
-      return res.status(400).json({ error: '文本长度不能超过2000字符' });
-    }
-    
-    console.log(`[${timestamp}] 🚀 调用科大讯飞API...`);
-    const result = await correctText(text);
-    
-    if (result.error) {
-      console.log(`[${timestamp}] ❌ API调用失败:`, result.error);
-      return res.status(500).json({ error: result.error });
-    }
-    
-    console.log(`[${timestamp}] ✅ 文本纠错完成`);
-    console.log(`[${timestamp}] 📊 返回数据大小: ${JSON.stringify(result).length} 字符`);
-    
-    res.json({ success: true, result });
-  } catch (error) {
-    console.log(`[${timestamp}] 💥 服务器异常:`, error.message);
-    console.log(`[${timestamp}] 📚 错误堆栈:`, error.stack);
-    res.status(500).json({ error: '服务器内部错误' });
+  Logger.info('开始文本纠错', {
+    textLength: req.validatedData.text ? req.validatedData.text.length : 0,
+    ip: req.ip
+  });
+  
+  const text = sanitizeInput(req.validatedData.text);
+  
+  Logger.debug('调用科大讯飞API', { textPreview: text.substring(0, 100) });
+  const result = await correctText(text);
+  
+  if (result.error) {
+    throw new AppError(result.error, ErrorTypes.API_ERROR, result.details);
   }
-});
+  
+  Logger.info('文本纠错完成', { 
+    resultSize: JSON.stringify(result).length 
+  });
+  
+  res.json({ success: true, result });
+}));
 
 // 文件上传和纠错接口
-app.post('/api/correct-file', upload.single('file'), async (req, res) => {
+app.post('/api/correct-file', upload.single('file'), validateFileUpload, asyncHandler(async (req, res) => {
   const timestamp = new Date().toISOString();
   
+  Logger.info('开始文件纠错', {
+    fileName: req.file.originalname,
+    fileSize: req.file.size,
+    fileType: req.file.mimetype,
+    ip: req.ip
+  });
+  
+  let text;
   try {
-    console.log(`[${timestamp}] 📁 开始文件纠错`);
+    Logger.debug('开始提取文件文本');
+    text = await extractTextFromFile(req.file.path, req.file.originalname);
     
-    if (!req.file) {
-      console.log(`[${timestamp}] ❌ 验证失败: 未上传文件`);
-      return res.status(400).json({ error: '请选择要上传的文件' });
-    }
-    
-    console.log(`[${timestamp}] 📋 文件信息:`);
-    console.log(`[${timestamp}]   - 文件名: ${req.file.originalname}`);
-    console.log(`[${timestamp}]   - 文件大小: ${req.file.size} 字节`);
-    console.log(`[${timestamp}]   - 文件类型: ${req.file.mimetype}`);
-    console.log(`[${timestamp}]   - 保存路径: ${req.file.path}`);
-    
-    console.log(`[${timestamp}] 🔍 开始提取文件文本...`);
-    const text = await extractTextFromFile(req.file.path, req.file.originalname);
-    
-    console.log(`[${timestamp}] 📝 提取的文本长度: ${text.length} 字符`);
-    console.log(`[${timestamp}] 📄 文本预览: ${text.substring(0, 100) + (text.length > 100 ? '...' : '')}`);
+    Logger.debug('文件文本提取完成', {
+      textLength: text.length,
+      textPreview: text.substring(0, 100)
+    });
     
     if (text.length > 2000) {
-      console.log(`[${timestamp}] ❌ 验证失败: 文件内容过长 (${text.length} > 2000)`);
-      console.log(`[${timestamp}] 📄 文件纠错失败`);
-      return res.status(400).json({ error: '文件内容过长，请确保文本不超过2000字符' });
+      throw new AppError(
+        '文件内容过长，请确保文本不超过2000字符',
+        ErrorTypes.VALIDATION_ERROR
+      );
     }
     
-    console.log(`[${timestamp}] 🚀 调用科大讯飞API进行文件纠错...`);
-    const result = await correctText(text);
-    
-    // 清理上传的文件
-    console.log(`[${timestamp}] 🗑️  清理临时文件: ${req.file.path}`);
-    fs.unlinkSync(req.file.path);
+    const sanitizedText = sanitizeInput(text);
+    const result = await correctText(sanitizedText);
     
     if (result.error) {
-      console.log(`[${timestamp}] ❌ API调用失败:`, result.error);
-      return res.status(500).json({ error: result.error });
+      throw new AppError(result.error, ErrorTypes.API_ERROR, result.details);
     }
     
-    console.log(`[${timestamp}] ✅ 文件纠错完成`);
-    console.log(`[${timestamp}] 📊 返回数据大小: ${JSON.stringify(result).length} 字符`);
+    Logger.info('文件纠错完成', {
+      resultSize: JSON.stringify(result).length
+    });
     
     res.json({ 
       success: true, 
@@ -375,18 +394,20 @@ app.post('/api/correct-file', upload.single('file'), async (req, res) => {
       result 
     });
   } catch (error) {
-    console.log(`[${timestamp}] 💥 文件处理异常:`, error.message);
-    console.log(`[${timestamp}] 📚 错误堆栈:`, error.stack);
-    
-    // 清理上传的文件
+    // 确保清理临时文件
     if (req.file && fs.existsSync(req.file.path)) {
-      console.log(`[${timestamp}] 🗑️  清理异常文件: ${req.file.path}`);
+      Logger.debug('清理临时文件', { filePath: req.file.path });
       fs.unlinkSync(req.file.path);
     }
-    
-    res.status(500).json({ error: error.message || '文件处理失败' });
+    throw error;
+  } finally {
+    // 清理上传的文件
+    if (req.file && fs.existsSync(req.file.path)) {
+      Logger.debug('清理上传文件', { filePath: req.file.path });
+      fs.unlinkSync(req.file.path);
+    }
   }
-});
+}));
 
 // 健康检查接口
 app.get('/api/health', (req, res) => {
@@ -436,6 +457,12 @@ app.get('/api/status', (req, res) => {
 
 
 
+// 添加错误处理中间件
+app.use(errorHandler);
+
+// 404处理
+app.use(notFoundHandler);
+
 // 启动服务器 - 确保监听所有网络接口
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 服务器运行在端口: ${PORT}`);
@@ -472,23 +499,32 @@ process.on('SIGINT', () => {
 });
 
 // 错误处理 - 添加更详细的错误日志
+// 全局进程错误处理
 process.on('uncaughtException', (error) => {
-  console.error('❌ 未捕获的异常:', error);
-  console.error('❌ 错误堆栈:', error.stack);
+  Logger.error('未捕获的异常', {
+    error: error.message,
+    stack: error.stack
+  });
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ 未处理的Promise拒绝:', reason);
-  console.error('❌ Promise:', promise);
+  Logger.error('未处理的Promise拒绝', {
+    reason: reason,
+    promise: promise
+  });
   process.exit(1);
 });
 
 // 监听服务器错误
 server.on('error', (error) => {
-  console.error('❌ 服务器错误:', error);
+  Logger.error('服务器错误', {
+    error: error.message,
+    code: error.code
+  });
+  
   if (error.code === 'EADDRINUSE') {
-    console.error(`❌ 端口 ${PORT} 已被占用`);
+    Logger.error(`端口 ${PORT} 已被占用`);
   }
 });
 

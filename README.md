@@ -252,6 +252,12 @@ traeint_resp/
 ├── server.js                # 服务器主文件
 ├── README.md                # 项目说明文档
 ├── ARCHITECTURE.md          # 架构设计文档
+├── middleware/              # 中间件目录
+│   ├── errorHandler.js      # 错误处理中间件
+│   ├── logger.js            # 日志系统
+│   └── validator.js         # 输入验证中间件
+├── routes/                  # 路由目录
+│   └── logs.js              # 日志管理路由
 ├── public/                  # 静态资源目录
 │   ├── index.html           # 主页面
 │   ├── styles.css           # 样式文件
@@ -260,16 +266,13 @@ traeint_resp/
 │   ├── apiClient.js         # API通信模块
 │   ├── textProcessor.js     # 文本处理模块
 │   ├── uiManager.js         # 界面管理模块
-│   ├── errorHandler.js      # 错误处理模块
+│   ├── errorhandler.js      # 前端错误处理模块
 │   ├── cacheManager.js      # 缓存管理模块
 │   ├── userExperienceManager.js  # 用户体验模块
-│   ├── testManager.js       # 测试管理模块
-│   ├── documentationGenerator.js # 文档生成模块
 │   ├── textDiffModule.js    # 文本对比模块
-│   ├── eventBus.js          # 事件总线
+│   ├── eventbus.js          # 事件总线
 │   ├── dependencyContainer.js # 依赖注入容器
-│   ├── toolsController.js   # 工具控制器
-│   └── moduleExample.js     # 模块示例
+│   └── toolsController.js   # 工具控制器
 └── uploads/                 # 文件上传临时目录（自动创建）
 ```
 

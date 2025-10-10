@@ -151,22 +151,10 @@ class TextCorrectionApp {
         }
         
         // 注册测试管理器
-        if (window.TestManager) {
-            this.container.register('testManager', window.TestManager, {
-                singleton: true,
-                dependencies: ['config', 'eventBus'],
-                lazy: true
-            });
-        }
+        // TestManager已移除，不再注册
         
         // 注册文档生成器
-        if (window.DocumentationGenerator) {
-            this.container.register('docGenerator', window.DocumentationGenerator, {
-                singleton: true,
-                dependencies: ['config', 'eventBus'],
-                lazy: true
-            });
-        }
+        // DocumentationGenerator已移除，不再注册
         
         // 注册文本对比模块
         if (window.TextDiffModule) {
@@ -252,21 +240,11 @@ class TextCorrectionApp {
         
         // 监听快捷键事件
         this.eventBus.on('shortcut:docs', () => {
-            try {
-                const docGenerator = this.container.get('docGenerator');
-                docGenerator.showDocumentation();
-            } catch (error) {
-                console.warn('[App] 文档生成器未可用');
-            }
+            console.warn('[App] 文档功能已移除');
         });
         
         this.eventBus.on('shortcut:tests', () => {
-            try {
-                const testManager = this.container.get('testManager');
-                testManager.showTestContainer();
-            } catch (error) {
-                console.warn('[App] 测试管理器未可用');
-            }
+            console.warn('[App] 测试功能已移除');
         });
         
         console.log('[App] 事件监听设置完成');
@@ -492,14 +470,17 @@ class TextCorrectionApp {
                 // 增强组件
                 cacheManager: !!window.CacheManager,
                 userExperienceManager: !!window.UserExperienceManager,
-                testManager: !!window.TestManager,
-                documentationGenerator: !!window.DocumentationGenerator
+                // 已移除的模块状态
+            // testManager: false,
+            // documentationGenerator: false
             },
             features: {
                 caching: !!this.textProcessor?.cacheManager,
                 userExperience: !!this.textProcessor?.uxManager,
-                testing: !!this.testManager,
-                documentation: !!this.docGenerator
+                // 已移除的功能
+                // testing: false,
+                // 已移除的功能
+                // documentation: false
             }
         };
     }

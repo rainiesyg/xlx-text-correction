@@ -2,8 +2,8 @@ module.exports = {
   apps: [{
     name: 'xinlianxin-text-correction',
     script: 'server.js',
-    instances: 'max', // 使用所有CPU核心
-    exec_mode: 'cluster',
+    instances: 1, // Windows环境建议单实例，避免端口冲突
+    exec_mode: 'fork', // Windows环境使用fork模式
     env: {
       NODE_ENV: 'development',
       PORT: 3003
@@ -22,13 +22,20 @@ module.exports = {
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     
     // 进程管理
+    autorestart: true,
     max_memory_restart: '1G',
     min_uptime: '10s',
     max_restarts: 10,
+    restart_delay: 4000,
     
     // 监控和重启
     watch: false,
     ignore_watch: ['node_modules', 'logs', 'uploads'],
+    
+    // Windows特定配置
+    node_args: [
+      '--max-old-space-size=1024'
+    ],
     
     // 健康检查
     health_check_grace_period: 3000,
@@ -40,13 +47,13 @@ module.exports = {
 
   deploy: {
     production: {
-      user: 'root',
-      host: ['your-server-ip'],
+      user: 'administrator',
+      host: 'localhost',
       ref: 'origin/main',
-      repo: 'https://github.com/your-username/your-repo.git',
-      path: '/var/www/xinlianxin-text-correction',
+      repo: 'https://github.com/rainiesyg/xlx-text-correction.git',
+      path: 'C:\\inetpub\\wwwroot\\xinlianxin-text-correction',
       'pre-deploy-local': '',
-      'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production',
+      'post-deploy': 'npm install --production && pm2 reload ecosystem.config.js --env production',
       'pre-setup': ''
     }
   }

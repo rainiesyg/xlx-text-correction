@@ -73,18 +73,27 @@ class EnhancedLogger {
   formatMessage(level, message, meta = {}) {
     const timestamp = new Date().toISOString();
     const levelName = LogLevelNames[level];
-    
+
+    const traceId = meta.traceId || this.generateTraceId();
+    const requestId = meta.requestId || traceId;
+
     const logEntry = {
       timestamp,
       level: levelName,
       message,
+      traceId,
+      requestId,
       ...meta
     };
 
     return {
-      console: this.formatConsoleMessage(timestamp, levelName, message, meta),
+      console: this.formatConsoleMessage(timestamp, levelName, message, { ...meta, traceId, requestId }),
       file: JSON.stringify(logEntry)
     };
+  }
+
+  generateTraceId() {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
   }
 
   formatConsoleMessage(timestamp, level, message, meta) {

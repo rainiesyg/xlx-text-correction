@@ -92,10 +92,14 @@ npm install
 ```
 
 3. **配置API密钥**
-项目中已配置科大讯飞API密钥：
-- APPID: 27d422bd
-- APISecret: NjRmZjM4NGUzZGFkNTUxZjM3NzQxYjJh
-- APIKey: f362096d765f0452321a6f4c51a5d735
+请通过环境变量提供科大讯飞API密钥（不要写入代码或仓库）：
+- IFLYTEK_APPID=<你的APPID>
+- IFLYTEK_API_SECRET=<你的APISecret>
+- IFLYTEK_API_KEY=<你的APIKey>
+示例（Windows PowerShell 临时会话）：
+$env:IFLYTEK_APPID='<APPID>'
+$env:IFLYTEK_API_SECRET='<APISecret>'
+$env:IFLYTEK_API_KEY='<APIKey>'
 
 4. **启动服务**
 ```bash
@@ -377,6 +381,17 @@ npm run docs    # 生成文档
 npm run clean   # 清理文件
 npm run health  # 健康检查
 ```
+
+## 最小冒烟测试
+
+- 前置：在另一个终端启动服务（npm run dev 或 npm start），并确保 IFLYTEK_* 环境变量已配置。
+- 一键冒烟（自动校验 /api/health、/api/status、/api/correct-text）：
+  - PowerShell / 跨平台：npm run smoke
+  - 成功标准：命令退出码为 0，控制台依次打印 [health] ok、[status] ok、[correct-text] ok
+- 手动冒烟（浏览器）：
+  - http://localhost:3003/api/health 返回 status=ok
+  - http://localhost:3003/api/status 返回 success=true
+  - 页面 http://localhost:3003 标签切换、文本输入纠错、文档上传纠错、文本对比工具均可用
 
 ---
 

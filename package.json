@@ -12,7 +12,8 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs": "node -e \"console.log('生成API文档...')\"",
-    "clean": "echo \"清理临时文件...\""
+    "clean": "echo \"清理临时文件...\"",
+    "smoke": "node -e \"(async()=>{const base='http://localhost:'+ (process.env.PORT||3003);const j=a=>JSON.stringify(a);function log(t){console.log(t)}try{let r=await fetch(base+'/api/health');if(!r.ok)throw new Error('health http '+r.status);let h=await r.json();log('[health] ok '+j(h));r=await fetch(base+'/api/status');if(!r.ok)throw new Error('status http '+r.status);let s=await r.json();log('[status] ok '+j(s));r=await fetch(base+'/api/correct-text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'这是一段待纠错的中文文本，用于冒烟测试。'})});if(!r.ok)throw new Error('correct-text http '+r.status);let c=await r.json();if(!c.success)throw new Error('correct-text success=false');log('[correct-text] ok');process.exit(0);}catch(e){console.error('[smoke] FAIL',e.message||e);process.exit(1);}})()\""
   },
   "dependencies": {
     "axios": "^1.12.2",

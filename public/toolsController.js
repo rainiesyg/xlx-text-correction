@@ -9,7 +9,6 @@ class ToolsController {
     init() {
         this.initNavigation();
         this.initTextDiff();
-        this.initTabSwitching();
     }
 
     // 初始化导航
@@ -45,32 +44,6 @@ class ToolsController {
         }
 
         this.currentTool = toolName;
-    }
-
-    // 初始化标签页切换
-    initTabSwitching() {
-        const tabButtons = document.querySelectorAll('.tab-button');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabName = button.dataset.tab;
-                this.switchTab(tabName);
-            });
-        });
-    }
-
-    // 切换标签页
-    switchTab(tabName) {
-        // 更新按钮状态
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-        // 更新内容显示
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(tabName).classList.add('active');
     }
 
     // 初始化文本对比功能

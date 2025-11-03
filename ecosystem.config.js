@@ -11,9 +11,9 @@ module.exports = {
     env_production: {
       NODE_ENV: 'production',
       PORT: 3003,
-      IFLYTEK_APPID: process.env.IFLYTEK_APPID || '27d422bd',
-      IFLYTEK_API_SECRET: process.env.IFLYTEK_API_SECRET || 'NjRmZjM4NGUzZGFkNTUxZjM3NzQxYjJh',
-      IFLYTEK_API_KEY: process.env.IFLYTEK_API_KEY || 'f362096d765f0452321a6f4c51a5d735'
+      IFLYTEK_APPID: process.env.IFLYTEK_APPID,
+      IFLYTEK_API_SECRET: process.env.IFLYTEK_API_SECRET,
+      IFLYTEK_API_KEY: process.env.IFLYTEK_API_KEY
     },
     // 日志配置
     log_file: './logs/combined.log',

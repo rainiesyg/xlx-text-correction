@@ -134,7 +134,8 @@ function errorHandler(err, req, res, next) {
     error: {
       message: error.message,
       type: error.type,
-      code: error.statusCode,
+      code: error.code,
+      status: error.statusCode,
       timestamp: error.timestamp
     }
   };
@@ -153,7 +154,9 @@ function errorHandler(err, req, res, next) {
 function notFoundHandler(req, res, next) {
   const error = new AppError(
     `路径 ${req.originalUrl} 不存在`,
-    ErrorTypes.VALIDATION_ERROR
+    ErrorTypes.NOT_FOUND,
+    'RESOURCE_NOT_FOUND',
+    404
   );
   next(error);
 }

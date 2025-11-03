@@ -25,16 +25,27 @@ const {
 const logsRouter = require('./routes/logs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 
 // 科大讯飞API配置
 const XUNFEI_CONFIG = {
-  APPID: process.env.IFLYTEK_APPID || 'a4fe0d69',
-  APISecret: process.env.IFLYTEK_API_SECRET || 'NzVmMjAyOTg3ODUxNGU5MjdjZWE2NmY4',
-  APIKey: process.env.IFLYTEK_API_KEY || '3dc6961e01940585f3a7bb55dcef9b34',
+  APPID: process.env.IFLYTEK_APPID,
+  APISecret: process.env.IFLYTEK_API_SECRET,
+  APIKey: process.env.IFLYTEK_API_KEY,
   HOST: 'api.xf-yun.com',
   URI: '/v1/private/s9a87e3ec'
 };
+
+// 启动前强校验：必须提供讯飞API密钥环境变量
+(() => {
+  const requiredEnv = ['IFLYTEK_APPID', 'IFLYTEK_API_SECRET', 'IFLYTEK_API_KEY'];
+  const missing = requiredEnv.filter(k => !process.env[k] || String(process.env[k]).trim() === '');
+  if (missing.length > 0) {
+    console.error('❌ 缺少必要环境变量：' + missing.join(', '));
+    console.error('请通过环境变量提供 IFLYTEK_APPID / IFLYTEK_API_SECRET / IFLYTEK_API_KEY 后再启动。');
+    process.exit(1);
+  }
+})();
 
 // 直接使用APISecret（不需要Base64解码）
 function getAPISecret() {
@@ -63,27 +74,33 @@ function generateAuthHeader(method, uri, host, date) {
   return authorization;
 }
 
-// 请求日志中间件
+// 请求日志中间件（附加 traceId/requestId）
 app.use((req, res, next) => {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
+
+  const traceId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  req.traceId = traceId;
+  res.setHeader('X-Trace-Id', traceId);
   
-  console.log(`\n[${timestamp}] 📥 ${req.method} ${req.url}`);
+  console.log(`\n[${timestamp}] 📥 ${req.method} ${req.url} traceId=${traceId}`);
   console.log(`[${timestamp}] 🌐 客户端IP: ${req.ip || req.connection.remoteAddress}`);
   console.log(`[${timestamp}] 📋 User-Agent: ${req.get('User-Agent') || 'Unknown'}`);
   
   if (req.method === 'POST' && req.url.includes('/api/')) {
-    console.log(`[${timestamp}] 📦 请求头:`, JSON.stringify(req.headers, null, 2));
+    const lvl = (process.env.LOG_LEVEL || 'INFO').toUpperCase();
+    if (lvl === 'DEBUG') {
+      console.log(`[${timestamp}] 📦 请求头:`, JSON.stringify(req.headers, null, 2));
+    }
   }
   
-  // 记录响应
   const originalSend = res.send;
   res.send = function(data) {
     const endTime = Date.now();
     const duration = endTime - startTime;
     const responseTimestamp = new Date().toISOString();
     
-    console.log(`[${responseTimestamp}] 📤 响应状态: ${res.statusCode}`);
+    console.log(`[${responseTimestamp}] 📤 响应状态: ${res.statusCode} traceId=${traceId}`);
     console.log(`[${responseTimestamp}] ⏱️  处理时间: ${duration}ms`);
     
     if (res.statusCode >= 400) {
@@ -105,6 +122,9 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static('public'));
+
+// 处理浏览器自动请求的站点图标，避免 404 噪音
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // 日志管理路由
 app.use('/api/logs', logsRouter);
@@ -151,7 +171,7 @@ function generateXunfeiAuth() {
 }
 
 // 调用科大讯飞文本纠错API
-async function correctText(text) {
+async function correctText(text, traceId) {
   const timestamp = new Date().toISOString();
   
   try {
@@ -199,7 +219,8 @@ async function correctText(text) {
     Logger.debug('发送API请求', { 
       host: XUNFEI_CONFIG.HOST,
       uri: XUNFEI_CONFIG.URI,
-      appId: XUNFEI_CONFIG.APPID
+      appId: XUNFEI_CONFIG.APPID,
+      traceId: traceId
     });
     
     const startTime = Date.now();
@@ -336,7 +357,7 @@ app.post('/api/correct-text', validateTextCorrection, asyncHandler(async (req, r
   const text = sanitizeInput(req.validatedData.text);
   
   Logger.debug('调用科大讯飞API', { textPreview: text.substring(0, 100) });
-  const result = await correctText(text);
+  const result = await correctText(text, req.traceId);
   
   if (result.error) {
     throw new AppError(result.error, ErrorTypes.API_ERROR, result.details);
@@ -378,7 +399,7 @@ app.post('/api/correct-file', upload.single('file'), validateFileUpload, asyncHa
     }
     
     const sanitizedText = sanitizeInput(text);
-    const result = await correctText(sanitizedText);
+    const result = await correctText(sanitizedText, req.traceId);
     
     if (result.error) {
       throw new AppError(result.error, ErrorTypes.API_ERROR, result.details);

@@ -10,6 +10,7 @@ class TextDiffModule {
         this.rightText = '';
         this.ignoreCase = true;
         this.ignoreWhitespace = false;
+        this.diffMode = 'line'; // line | word | char
         this.diffTimeout = null;
         this.initialized = false;
     }
@@ -63,6 +64,12 @@ class TextDiffModule {
         
         elements.ignoreWhitespaceCheckbox?.addEventListener('change', (e) => {
             this.ignoreWhitespace = e.target.checked;
+            this.autoCompare();
+        });
+
+        // 差异模式选择
+        document.getElementById('diffMode')?.addEventListener('change', (e) => {
+            this.diffMode = e.target.value;
             this.autoCompare();
         });
 
@@ -183,10 +190,22 @@ class TextDiffModule {
      * 计算文本差异
      */
     computeDiff(text1, text2) {
+        // 基于模式选择不同粒度的 diff
+        if (typeof Diff !== 'undefined') {
+            try {
+                if (this.diffMode === 'word') {
+                    return this.wrapJsDiff(Diff.diffWords(text1, text2));
+                }
+                if (this.diffMode === 'char') {
+                    return this.wrapJsDiff(Diff.diffChars(text1, text2));
+                }
+            } catch (e) {
+                // 忽略，回退到行级
+            }
+        }
+
         const lines1 = text1.split('\n');
         const lines2 = text2.split('\n');
-        
-        // 使用改进的差异算法
         return this.computeLineDiff(lines1, lines2);
     }
 
@@ -304,6 +323,15 @@ class TextDiffModule {
     /**
      * 显示差异结果
      */
+    wrapJsDiff(parts) {
+        // 将 jsdiff 片段转成本模块通用结构（单行视图）
+        return parts.map(p => ({
+            type: p.added ? 'added' : p.removed ? 'removed' : 'unchanged',
+            left: p.removed ? p.value : (p.added ? null : p.value),
+            right: p.added ? p.value : (p.removed ? null : p.value)
+        }));
+    }
+
     displayDiff(diff) {
         const elements = this.getDOMElements();
         

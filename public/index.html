@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>心连心工作效率工具集</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -127,9 +128,14 @@
                             <div class="comparison-panel">
                                 <h5>纠错后</h5>
                                 <div class="corrected-text" id="comparisonCorrectedText"></div>
-                                <button class="btn btn-secondary" id="copyBtn">
-                                    <i class="fas fa-copy"></i> 复制结果
-                                </button>
+                                <div style="display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;color:#555;">
+                                        <input type="checkbox" id="showDeletionsToggle"> 显示删除内容
+                                    </label>
+                                    <button class="btn btn-secondary" id="copyBtn">
+                                        <i class="fas fa-copy"></i> 复制结果
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -162,6 +168,14 @@
                         <label>
                             <input type="checkbox" id="ignoreWhitespace">
                             忽略空白字符
+                        </label>
+                        <label>
+                            差异模式
+                            <select id="diffMode" style="margin-left:6px;padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;">
+                                <option value="line" selected>行级</option>
+                                <option value="word">词级</option>
+                                <option value="char">字符级</option>
+                            </select>
                         </label>
                     </div>
                 </div>
@@ -260,12 +274,14 @@
     <script src="config.js"></script>
     <script src="dependencyContainer.js"></script>
     <script src="eventBus.js"></script>
-    <script src="cacheManager.js"></script>
-    <script src="userExperienceManager.js"></script>
+
     <script src="errorhandler.js"></script>
     <script src="apiClient.js"></script>
     <script src="textProcessor.js"></script>
     <script src="uiManager.js"></script>
+    <!-- jsdiff: 高质量文本差异算法（CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js" integrity="sha256-4S+WZ1q2q3k4b5c9+q6mQm6E8jF4w2w6l7mVg4l0VtY=" crossorigin="anonymous"></script>
+
     <script src="textDiffModule.js"></script>
     <script src="toolsController.js"></script>
     <script src="script.js"></script>

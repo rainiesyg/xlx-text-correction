@@ -61,7 +61,7 @@ class UIManager {
         
         // 监听结果处理事件
         this.eventBus.on('result:processed', (event) => {
-            this.displayResult(event.data.processedResult);
+            this.displayResults(event.data.processedResult, this.state.currentText || '');
         });
         
         // 监听UI状态更新事件
@@ -95,7 +95,7 @@ class UIManager {
             statisticsContainer: document.getElementById('statistics'),
             
             // 标签页
-            tabBtns: document.querySelectorAll('.tab-btn'),
+            tabBtns: document.querySelectorAll('.tab-button'),
             resultTabBtns: document.querySelectorAll('.result-tab-btn'),
             
             // 控制面板
@@ -130,7 +130,7 @@ class UIManager {
                 this.debounce(() => this.handleTextInput(), this.debounceDelay)
             );
             
-            this.elements.textInput.addEventListener('paste', (e) => {
+            this.elements.textInput.addEventListener('paste', () => {
                 setTimeout(() => this.handleTextInput(), 10);
             });
         }
@@ -226,7 +226,7 @@ class UIManager {
             // Ctrl+L: 清空内容
             if (e.ctrlKey && e.key === 'l') {
                 e.preventDefault();
-                this.handleClearButtonClick();
+                this.clearAll();
             }
             
             // Esc: 取消当前操作
@@ -504,7 +504,7 @@ class UIManager {
         
         // 激活选中的标签页
         const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-        const activeContent = document.getElementById(`${tabName}-tab`);
+        const activeContent = document.getElementById(tabName);
         
         if (activeBtn) activeBtn.classList.add('active');
         if (activeContent) activeContent.classList.add('active');
@@ -903,16 +903,11 @@ class UIManager {
      */
     bindErrorItemEvents() {
         const errorItems = this.elements.errorDetails.querySelectorAll('.error-item');
-        errorItems.forEach((item, index) => {
+        errorItems.forEach((item) => {
             item.addEventListener('click', () => {
-                // 高亮对应的错误位置
-                const errorType = item.dataset.errorType;
-                const errorIndex = parseInt(item.dataset.errorIndex);
-                
                 // 切换选中状态
                 item.classList.toggle('selected');
-                
-                // 可以在这里添加更多交互逻辑，比如滚动到对应位置等
+                // 可在此添加更多交互逻辑
             });
         });
     }
@@ -1248,13 +1243,9 @@ class UIManager {
     }
 }
 
-// 创建全局UI管理器实例
-const uiManager = new UIManager();
-
-// 导出UI管理器
+// 导出UI管理器（不在此处创建全局实例，交由依赖注入容器管理）
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = UIManager;
 } else {
     window.UIManager = UIManager;
-    window.uiManager = uiManager;
 }

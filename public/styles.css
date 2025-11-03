@@ -2884,6 +2884,19 @@ body {
     font-weight: 600;
 }
 
+/* 纠错结果页：删除内容样式（可切换显示） */
+.highlight-deletion {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 2px 4px;
+    border-radius: 3px;
+    text-decoration: line-through;
+    display: inline; /* 通过开关控制是否显示 */
+}
+
+/* 文本对比工具：差异模式下的说明提示（可复用已有样式） */
+.diff-mode-hint { font-size: 12px; color: #666; }
+
 /* 滚动条样式 */
 ::-webkit-scrollbar {
     width: 8px;

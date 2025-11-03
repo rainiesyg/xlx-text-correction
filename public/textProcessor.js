@@ -5,12 +5,12 @@ class TextProcessor {
         this.errorTypes = CONFIG.ERROR_TYPES;
         this.config = CONFIG || {};
 
-        // 初始化缓存管理器
-        this.cache = new CacheManager({
-            enabled: this.config.UI?.PERFORMANCE?.CACHE_ENABLED,
-            ttl: this.config.UI?.PERFORMANCE?.CACHE_TTL,
-            maxSize: 500
-        });
+        // 移除外部缓存依赖，使用轻量内置空实现
+        this.cache = {
+            get: () => null,
+            set: () => {},
+            generateKey: (...args) => JSON.stringify(args)
+        };
 
         // 性能配置
         this.batchSize = this.config.UI?.PERFORMANCE?.BATCH_SIZE || 100;
@@ -20,8 +20,14 @@ class TextProcessor {
         this.throttleTimers = new Map();
         this.pendingUpdates = new Map();
 
-        // 用户体验管理器
-        this.uxManager = new UserExperienceManager(this.config);
+        // 移除外部 UX 依赖，使用空实现
+        this.uxManager = {
+            showFeedback: () => {},
+            startProgress: () => {},
+            updateProgress: () => {},
+            completeProgress: () => {},
+            updateStatistics: () => {}
+        };
 
 
     }
